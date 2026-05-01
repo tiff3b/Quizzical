@@ -1,23 +1,25 @@
 import { useState, useEffect } from 'react'
 
-export default function Questions ({ questions }){
+export default function Questions ({ questions, restartQuiz }){
 
     const [questionAnswer, setQuestionAnswer] = useState([])
     const [answerGuess, setAnswerGuess] = useState({})
+    const [showResults, setShowResults] = useState(false)
 
-    function shuffleArray(array) {
-        return [...array].sort(() => Math.random() - 0.5)
+    function shuffleArray(array) { 
+        return [...array].sort(() => Math.random() - 0.5) 
     }
 
     useEffect(() => {
-        const selection = questions.map(q => ({
+        setQuestionAnswer(
+             questions.map(q => ({
             ...q,
             allAnswers: shuffleArray([
                 q.correct_answer,
                 ...q.incorrect_answers
             ])
         }))
-        setQuestionAnswer(selection)
+    )
     }, [questions])
 
     function handleClick(qIndex, answer) {
@@ -26,6 +28,12 @@ export default function Questions ({ questions }){
             [qIndex]: answer
         }))
     }
+
+    const score = questionAnswer.reduce((total, q, index) => {
+        return answerGuess[index] === q.correct_answer
+            ? total + 1
+            : total
+    }, 0)
 
     return (
         <>
@@ -39,12 +47,28 @@ export default function Questions ({ questions }){
                 <div className='answers'>
                     {q.allAnswers.map((answer, i) => {
                         const isSelected = answerGuess[index] === answer
-                    return(
+                        const isCorrect = answer === q.correct_answer
+
+                    let className = 'answer-btn'
+
+                    if (showResults) {
+                        if (isCorrect) {
+                            className += ' correct'
+                        } else if (isSelected && !isCorrect) {
+                            className += ' incorrect'
+                        } else {
+                            className += ' faded'
+                        }
+                    } else if (isSelected) {
+                        className += ' selected'
+                    }
+                return (                    
                         <button
-                            key={i}
-                            className={`answer-btn ${isSelected ? 'selected' : ''}`}
+                            key={`${index}-${answer}`}
+                            className={className}
                             onClick={() => handleClick(index, answer)}
-                            dangerouslySetInnerHTML={{ __html: answer}} />
+                            dangerouslySetInnerHTML={{ __html: answer}} 
+                        />
                     )
 })}
                 </div>
@@ -54,11 +78,29 @@ export default function Questions ({ questions }){
         </section>
 
         <section className='check-answers'>
-            <button className='check-btn'> 
-                Check answers
+            {showResults && (
+                <p className="score">
+                   You scored {score}/{questionAnswer.length} correct answers 
+                </p> 
+            )}
+
+            <button className='check-btn'
+                onClick={() => {
+                    if (showResults) {
+                        setShowResults(false)
+                        setAnswerGuess({})
+                        restartQuiz()
+                } else {
+                    setShowResults(true)
+                }
+            }}
+        >
+            {showResults ? 'Play again' : 'Check answers'}
             </button>
         </section>
         </div>
+        
         </> 
     )           
 }
+

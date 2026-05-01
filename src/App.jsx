@@ -29,7 +29,9 @@ return (
             Start quiz</button>
     </section>
     ) : (
-      <Questions questions={questions}
+      <Questions 
+        questions={questions}
+        restartQuiz={startQuiz}
       />
     )}   
   </div>
